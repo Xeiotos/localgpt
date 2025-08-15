@@ -24,6 +24,8 @@ services:
     build:
       context: .
       dockerfile: llama.Dockerfile
+      args:
+        CUDA_ARCHS: "86" # RTX 3080
     container_name: llama-server
     ports:
       - "8502:8502"
