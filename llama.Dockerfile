@@ -14,7 +14,7 @@ RUN ln -sf ${CUDA_STUBS}/libcuda.so ${CUDA_STUBS}/libcuda.so.1
 
 WORKDIR /app
 
-RUN git clone https://github.com/ggerganov/llama.cpp.git && \
+RUN git clone --depth 1 https://github.com/ggerganov/llama.cpp.git && \
     cd llama.cpp && \
     cmake -S . -B build \
       -DLLAMA_CURL=OFF \
@@ -24,10 +24,12 @@ RUN git clone https://github.com/ggerganov/llama.cpp.git && \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
       -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-      -DLLAMA_BUILD_TOOLS=OFF \
+      -DLLAMA_BUILD_COMMON=ON \
+      -DLLAMA_BUILD_TOOLS=ON \ 
+      -DLLAMA_BUILD_SERVER=ON \
       -DLLAMA_BUILD_TESTS=OFF \
       -DLLAMA_BUILD_EXAMPLES=OFF \
-      -DLLAMA_BUILD_SERVER=ON \
+      -DBUILD_SHARED_LIBS=OFF \
       -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,${CUDA_STUBS}" \
     && cmake --build build --config Release -j"$(nproc)"
 
@@ -42,8 +44,6 @@ WORKDIR /app
 
 # Copy server + its shared libs
 COPY --from=builder /app/llama.cpp/build/bin/llama-server /app/llama-server
-COPY --from=builder /app/llama.cpp/build/bin/libggml*.so /usr/local/lib/
-COPY --from=builder /app/llama.cpp/build/bin/libllama*.so /usr/local/lib/
 RUN ldconfig
 
 EXPOSE 8502
