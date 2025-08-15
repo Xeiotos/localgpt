@@ -9,6 +9,7 @@ import {
 } from '@chatscope/chat-ui-kit-react';
 import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
 import './App.css';
+import MarkdownRenderer from './components/MarkdownRenderer';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
 
@@ -138,10 +139,11 @@ function App() {
 
                 case 'final_response_start':
                   toolStatus = '';
+                  accumulatedContent = '';
                   setMessages(prevMessages => 
                     prevMessages.map(msg => 
                       msg.id === assistantMessageId 
-                        ? { ...msg, message: accumulatedContent }
+                        ? { ...msg, message: '' }
                         : msg
                     )
                   );
@@ -210,7 +212,12 @@ function App() {
             {messages.map((message, i) => (
               <Message
                 key={i}
-                model={message}
+                model={{
+                  ...message,
+                  message: message.sender === 'assistant' ? (
+                    <MarkdownRenderer content={message.message} />
+                  ) : message.message
+                }}
                 style={
                   message.sender === 'system'
                     ? { backgroundColor: '#ffebee' }

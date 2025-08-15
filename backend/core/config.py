@@ -14,7 +14,7 @@ class Settings:
     JUPY_PORT: int = int(os.getenv("JUPY_PORT", "8888"))
     
     # Session Management
-    SESSION_TTL: int = int(os.getenv("SESSION_TTL", "7200"))  # 2 hours
+    JUPYTER_SESSION_TTL: int = int(os.getenv("JUPYTER_SESSION_TTL", "7200"))  # 2 hours
     GC_INTERVAL: int = int(os.getenv("GC_INTERVAL", "300"))   # 5 minutes
     
     # API Configuration

@@ -2,15 +2,14 @@ import json
 import time
 import uuid
 from websocket import create_connection
-from .docker_service import DockerService
+from .jupyter_gateway_service import JupyterGatewayService
 
 class JupyterService:
-    def __init__(self, docker_service: DockerService):
-        self.docker_service = docker_service
+    def __init__(self, jupyter_gateway_service: JupyterGatewayService):
+        self.jupyter_gateway_service = jupyter_gateway_service
     
-    def _jupyter_execute(self, ws_url: str, code: str, timeout: int = 30) -> str:
-        """Execute code in Jupyter kernel via websocket"""
-        session = uuid.uuid4().hex
+    def _jupyter_execute(self, ws_url: str, session_id: str, code: str, timeout: int = 120) -> str:
+        """Execute code in Jupyter kernel via fresh websocket connection"""
         msg_id = uuid.uuid4().hex
         content = {
             "code": code, 
@@ -22,7 +21,7 @@ class JupyterService:
         header = {
             "msg_id": msg_id, 
             "username": "user", 
-            "session": session, 
+            "session": session_id, 
             "date": "", 
             "msg_type": "execute_request", 
             "version": "5.3"
@@ -34,33 +33,43 @@ class JupyterService:
             "content": content
         }
         
-        ws = create_connection(ws_url, timeout=timeout)
-        ws.send(json.dumps(msg))
+        ws = create_connection(ws_url, timeout=30)
         
-        stdout, stderr = [], []
-        result = None
-        idle = False
-        t0 = time.time()
-        
-        while time.time() - t0 < timeout:
-            raw = ws.recv()
-            m = json.loads(raw)
-            mtype = m.get("msg_type") or m.get("msg", "")
-            c = m.get("content", {})
+        try:
+            # Send our execution request
+            ws.send(json.dumps(msg))
             
-            if mtype in ("stream",):
-                (stdout if c.get("name") == "stdout" else stderr).append(c.get("text", ""))
-            elif mtype == "execute_result":
-                data = c.get("data", {})
-                if "text/plain" in data:
-                    result = data["text/plain"]
-            elif mtype == "error":
-                stderr.append("\n".join(c.get("traceback", [])))
-            elif mtype == "status" and c.get("execution_state") == "idle":
-                idle = True
-                break
-        
-        ws.close()
+            stdout, stderr = [], []
+            result = None
+            idle = False
+            t0 = time.time()
+            
+            while time.time() - t0 < timeout:
+                try:
+                    raw = ws.recv()
+                    m = json.loads(raw)
+                    mtype = m.get("msg_type") or m.get("msg", "")
+                    c = m.get("content", {})
+                    
+                    # Only process messages for our request
+                    if m.get("parent_header", {}).get("msg_id") == msg_id:
+                        if mtype in ("stream",):
+                            (stdout if c.get("name") == "stdout" else stderr).append(c.get("text", ""))
+                        elif mtype == "execute_result":
+                            data = c.get("data", {})
+                            if "text/plain" in data:
+                                result = data["text/plain"]
+                        elif mtype == "error":
+                            stderr.append("\n".join(c.get("traceback", [])))
+                        elif mtype == "status" and c.get("execution_state") == "idle":
+                            # This idle status is for our request - we're done
+                            idle = True
+                            break
+                except Exception as e:
+                    break
+            
+        finally:
+            ws.close()
         
         if not idle and not result and not stdout and not stderr:
             return "[python error] timeout"
@@ -70,6 +79,6 @@ class JupyterService:
     
     def execute_python(self, conv_id: str, code: str) -> str:
         """Execute Python code for a conversation"""
-        s = self.docker_service.ensure_kernel(conv_id)
-        s["last_used"] = time.time()
-        return self._jupyter_execute(s["ws_url"], code)
+        kernel_info = self.jupyter_gateway_service.ensure_kernel(conv_id)
+        kernel_info["last_used"] = time.time()
+        return self._jupyter_execute(kernel_info["ws_url"], kernel_info["session_id"], code)

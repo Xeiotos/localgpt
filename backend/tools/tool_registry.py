@@ -21,9 +21,13 @@ class ToolRegistry:
             return f"Unknown tool: {name}"
         
         try:
-            return self.tools[name].execute(conv_id, args)
+            tool = self.tools[name]
+            if not hasattr(tool, 'execute'):
+                return f"Tool {name} does not have execute method. Has: {dir(tool)}"
+            return tool.execute(conv_id, args)
         except Exception as e:
-            return f"Tool execution error: {str(e)}"
+            import traceback
+            return f"Tool execution error: {str(e)}\nTraceback: {traceback.format_exc()}"
     
     def get_available_tools(self) -> List[str]:
         """Get list of available tool names"""

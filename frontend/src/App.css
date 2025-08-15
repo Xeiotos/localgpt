@@ -82,3 +82,84 @@
   border-radius: 3px;
   font-family: 'Courier New', monospace;
 }
+
+/* Markdown Styles */
+.inline-code {
+  background-color: #f4f4f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  color: #e83e8c;
+}
+
+.code-block {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 16px;
+  margin: 12px 0;
+  overflow-x: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+.code-block code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  color: #333;
+}
+
+.markdown-blockquote {
+  border-left: 4px solid #2196f3;
+  padding-left: 16px;
+  margin: 16px 0;
+  color: #666;
+  font-style: italic;
+}
+
+.markdown-h1, .markdown-h2, .markdown-h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.markdown-h1 {
+  font-size: 1.4em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 6px;
+}
+
+.markdown-h2 {
+  font-size: 1.2em;
+}
+
+.markdown-h3 {
+  font-size: 1.1em;
+}
+
+.markdown-ul, .markdown-ol {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.markdown-li {
+  margin: 4px 0;
+  line-height: 1.5;
+}
+
+.markdown-p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.markdown-strong {
+  font-weight: 600;
+}
+
+.markdown-em {
+  font-style: italic;
+}

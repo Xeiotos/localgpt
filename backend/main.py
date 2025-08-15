@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .core.config import settings
-from .services.docker_service import DockerService
+from .services.jupyter_gateway_service import JupyterGatewayService
 from .services.jupyter_service import JupyterService
 from .services.llm_service import LLMService
 from .tools.tool_registry import ToolRegistry
@@ -26,8 +26,8 @@ def create_app() -> FastAPI:
     )
     
     # Initialize services
-    docker_service = DockerService()
-    jupyter_service = JupyterService(docker_service)
+    jupyter_gateway_service = JupyterGatewayService()
+    jupyter_service = JupyterService(jupyter_gateway_service)
     tool_registry = ToolRegistry(jupyter_service)
     llm_service = LLMService(tool_registry)
     
@@ -43,7 +43,7 @@ def create_app() -> FastAPI:
     def background_gc():
         while True:
             time.sleep(settings.GC_INTERVAL)
-            docker_service.gc_idle()
+            jupyter_gateway_service.gc_idle()
     
     threading.Thread(target=background_gc, daemon=True).start()
     

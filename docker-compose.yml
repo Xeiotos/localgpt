@@ -32,7 +32,7 @@ services:
     networks:
       - localgpt-network
     volumes:
-      - ./models:/models
+      - llama_models:/models:rw
     deploy:
       resources:
         reservations:
@@ -93,3 +93,4 @@ networks:
 
 volumes:
   jupyter-workspace:
+  llama_models:
