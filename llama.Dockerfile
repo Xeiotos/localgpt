@@ -5,7 +5,8 @@ RUN apt-get update && apt-get install -y \
     git \
     build-essential \
     cmake \
-    curl \
+    libcurl4-openssl-dev \
+    pkg-config \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
@@ -15,7 +16,11 @@ RUN git clone https://github.com/ggerganov/llama.cpp.git && \
     cd llama.cpp && \
     mkdir build && \
     cd build && \
-    cmake .. -DGGML_CUDA=ON && \
+    cmake .. \
+        -DGGML_CUDA=ON && \
+        -DGGML_BLAS=ON && \
+        -DGGML_BLAS_VENDOR=OpenBLAS && \
+        -DCMAKE_BUILD_TYPE=Release && \
     cmake --build . --config Release -j$(nproc)
 
 # Runtime stage
