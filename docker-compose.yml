@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  orchestrator:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    container_name: localgpt-orchestrator
+    ports:
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - localgpt-network
+    environment:
+      - OPENAI_BASE=http://llama-server:8502/v1
+      - OPENAI_KEY=dummy
+      - IMAGE=jupyter-uv:latest
+      - JUPY_TOKEN=token123
+      - JUPY_PORT=8888
+    depends_on:
+      - llama-server
+    restart: unless-stopped
+
+  llama-server:
+    build:
+      context: .
+      dockerfile: llama.Dockerfile
+    container_name: llama-server
+    ports:
+      - "8502:8502"
+    networks:
+      - localgpt-network
+    volumes:
+      - ./models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command: [
+      "-m", "/models/gpt-oss-20b-MXFP4.gguf",
+      "--device", "CUDA0",
+      "--n-gpu-layers", "999",
+      "-c", "65536",
+      "-fa",
+      "--min-p", "0",
+      "--top-p", "1.0",
+      "--top-k", "0",
+      "--temp", "1.0",
+      "--jinja",
+      "--chat-template-file", "/models/20b_template.jinja",
+      "--host", "0.0.0.0",
+      "--port", "8502",
+      "--api-key", "dummy"
+    ]
+    restart: unless-stopped
+
+  chat-frontend:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+    container_name: chat-frontend
+    ports:
+      - "3000:80"
+    networks:
+      - localgpt-network
+    depends_on:
+      - orchestrator
+    restart: unless-stopped
+
+  jupyter-gateway:
+    build:
+      context: .
+      dockerfile: jupyter.Dockerfile
+    image: jupyter-uv:latest
+    container_name: jupyter-gateway
+    ports:
+      - "8888:8888"
+    networks:
+      - localgpt-network
+    environment:
+      - JUPYTER_TOKEN=token123
+    volumes:
+      - jupyter-workspace:/workspace
+    restart: unless-stopped
+
+networks:
+  localgpt-network:
+    driver: bridge
+
+volumes:
+  jupyter-workspace:
