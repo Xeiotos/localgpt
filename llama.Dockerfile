@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     pkg-config \
     wget \
+    ccache \
+    libopenblas-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -17,10 +19,12 @@ RUN git clone https://github.com/ggerganov/llama.cpp.git && \
     mkdir build && \
     cd build && \
     cmake .. \
-        -DGGML_CUDA=ON && \
-        -DGGML_BLAS=ON && \
-        -DGGML_BLAS_VENDOR=OpenBLAS && \
-        -DCMAKE_BUILD_TYPE=Release && \
+        -DGGML_CUDA=ON \
+        -DGGML_BLAS=ON \
+        -DGGML_BLAS_VENDOR=OpenBLAS \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+        -DCMAKE_C_COMPILER_LAUNCHER=ccache && \
     cmake --build . --config Release -j$(nproc)
 
 # Runtime stage
