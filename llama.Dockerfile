@@ -44,7 +44,6 @@ WORKDIR /app
 
 # Copy server + its shared libs
 COPY --from=builder /app/llama.cpp/build/bin/llama-server /app/llama-server
-RUN ldconfig
 
 EXPOSE 8502
 ENTRYPOINT ["./llama-server"]
